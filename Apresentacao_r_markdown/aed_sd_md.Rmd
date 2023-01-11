@@ -1,0 +1,1193 @@
+---
+title: "Análise exploratória de dados com R"
+author: "Thais M. Filipi (t229887@dac.unicamp.br)"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 5
+    toc_float: true
+    theme: readable
+---
+
+```{=html}
+<style>
+body {
+text-align: justify}
+</style>
+```
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+# Início
+
+## *Curso oferecido no âmbito da I Semana da Demografia (24 a 27 de outubro de 2022) - IFCH-Unicamp.*
+
+O curso está dividido em três blocos: uma parte teórica, a parte prática da análise exploratória e uma incursão inicial em direção à Estatística inferencial (ou seja, como podemos generalizar as observações da amostra para a população). Vamos ficar por mais tempo no segundo bloco.
+
+# 1- Tipos de banco de dados e de variáveis
+
+## Diferença entre universo e amostra
+
+Ao longo do curso abordaremos dois aspectos da Estatística para Ciências Sociais: a Estatística descritiva e a inferencial. A análise exploratória lida principalmente com a primeira, mas ela usualmente opera como etapa preparatória para a segunda.
+
+A pesquisa empírica em Ciências Sociais muitas vezes é limitada pela disponibilidade de dados. Portanto, ter acesso a toda a população de interesse em determinada pesquisa é frequentemente inviável. É justamente essa a definição de "universo": o conjunto que contém todos os elementos com as características em análise. No caso do nosso exemplo, o universo seria toda a população jovem. Mais precisamente, a população entre 15 a 29 anos.
+
+Uma pesquisa que se aproxima da coleta de dados de todo o universo de interesse sãos os Censos Demográficos. Mas justamente pelos custos e pela dificuldade de realização da pesquisa é que eles são conduzidos uma vez a cada década.
+
+Portanto, a alternativa viável é coletar informações de parcelas do universo. Ou seja, obter amostras e a partir delas produzir inferências sobre o todo.
+
+## Tipos de amostra
+
+Contudo, nem todo método de obtenção de amostra é igual, e isso deve ser ponderado no momento de descrição e análise dos dados. A depender das condições de coleta e do tamanho da amostra, os dados podem ser invalidados e podem não ser passíveis de análise por meio de algumas técnicas estatísticas. Dito de outra forma, algumas amostras podem não ser generalizáveis para a população que queremos estuda. (Ter uma amostra com menos de 30 indivíduos é um exemplo.)
+
+Vamos dar uma olhada em como a amostra do banco que vamos analisar foi construída:
+
+-   Do que se trata a pesquisa:
+
+![Amostra OIT](/cloud/project/Imagens/amostra-oit.png)
+
+::: {.infobox .caution data-latex="{caution}"}
+**Método** "A pesquisa é estatisticamente representativa do universo da população nesta faixa etária, *valendo-se de uma amostra composta por 3.288 entrevistas, distribuídas em 160 municípios, estratificados por localização geográfica* (capital e interior, áreas urbanas e rurais) e em tercis de porte (municípios pequenos, médios e grandes) e contemplando 25 Unidades da Federação. **A amostragem foi feita de forma probabilística nos primeiros estágios (sorteio dos municípios, dos setores censitários, dos quarteirões e dos domicílios), combinada com controle de cotas de sexo, idade e por condição do ponto (urbano ou rural) para a seleção dos indivíduos (estágio final).** As margens de erro, se pudessem ser estimadas a partir de amostra puramente probabilística equivalente, seriam de até 2 pontos percentuais, para mais ou para menos, para o total da amostra, com intervalo de confiança de 95 por cento. Os critérios de dispersão, seleção e tamanho da amostra de jovens entrevistados/as garantem a representatividade dos resultados obtidos -- guardados os parâmetros estatísticos do desenho amostral -- para o conjunto do universo em foco: 51,3 milhões de jovens, correspondentes a 26,1 por cento do total da população brasileira (Censo 2010 -- IBGE). Nas tabelas a seguir, os percentuais encontrados na pesquisa TET são projetados para os números absolutos desse universo juvenil. Foi feita a aplicação de questionários estruturados, em entrevistas pessoais e domiciliares (tempo médio de 40 minutos de aplicação). Total de 147 perguntas, parcialmente distribuídas em 6 blocos." [Fonte](https://www.ilo.org/wcmsp5/groups/public/---dgreports/---dcomm/documents/publication/wcms_326892.pdf)
+:::
+
+-   Outros exemplos de desenho amostral
+
+[Pesquisa Nacional por Amostra de Domicílios Contínua](https://www.ibge.gov.br/estatisticas/sociais/trabalho/9171-pesquisa-nacional-por-amostra-de-domicilios-continua-mensal.html?=&t=conceitos-e-metodos)
+
+[(Ver também)](https://biblioteca.ibge.gov.br/visualizacao/livros/liv101435.pdf)
+
+![PnadC](/cloud/project/Imagens/amostra-pnad.png)
+
+[World Values Survey](https://www.worldvaluessurvey.org/WVSDocumentationWV7.jsp)
+
+![WVS](/cloud/project/Imagens/amostra-wvs.png)
+
+Por enquanto é isso: prestar atenção no desenho amostral na documentação das pesquisas que serão utilizadas. Vamos falar brevemente sobre a dimensão inferencial no tópico 3 do curso (aspectos do teorema do limite central).
+
+## Tipos de variáveis
+
+Em bancos de dados estruturados, as variáveis podem ser qualitativas ou quantitativas. O tipo de variável indica as possibilidades de descrição e visualização dos dados, seja de cada variável tomada isoladamente ou da interação entre elas.
+
+![Quadro 1 - Fonte: Cervi (2017).](/cloud/project/Imagens/quadro-variaveis1.png)
+
+![Quadro 2 - Fonte: Cervi (2017).](/cloud/project/Imagens/quadro-variaveis1.1.png)
+
+![Quadro 3 - Fonte: Cervi (2017).](/cloud/project/Imagens/quadro-variaveis2.png)
+
+# 2- Análise exploratória de dados
+
+A análise descritiva ou exploratória dos dados é etapa fundamental da pesquisa. A partir dela podemos: a) determinar a qualidade dos dados coletados, b) mapear de maneira ordenada os atributos do conjunto de dados, c) estabelecer conexões entre variáveis, d) preparar os dados para análises estatísticas diversas, como produzir generalizações da amostra para o universo da população em análise.
+
+## Preparando os dados para análise
+
+Antes de abrir o banco, vamos retomar o dicionário de dados. É importante estar com a documentação do banco ao alcance durante toda a etapa inicial de preparo dos dados.
+
+![Codebook](/cloud/project/Imagens/codebook.png)
+
+Não é incomum termos que lidar com dados faltantes, erros de registro, valores discrepantes, linhas duplicadas e demais possíveis inconsistências nos dados. Nesse processo podemos fazer uso de recodificação e transformação das variáveis.
+
+Vamos ao código!
+
+-   Vamos carregar as bibliotecas conforme uso, ok? Mas isso é pessoas, cada pessoa pode optar por estratégias diferentes:
+
+```{r bibliotecas, echo=TRUE}
+library(tidyverse)
+```
+
+-   Agora vamos carregar o banco de dados (a versão já editada na parte inicial do curso de R básico)
+
+```{r banco, echo=TRUE}
+getwd()
+banco <-read.csv("/cloud/project/minicurso_r_sd.csv", sep = ";", dec = ",")
+```
+
+### Primeiras impressões
+
+```{r sumario, echo=TRUE}
+summary(banco)
+head(banco, n=10) # Mostra as 10 primeiras observaçoes da base de dados
+str(banco) # Mostra a estrutura da base de dados
+dim(banco) # As dimensoes do dataset: linhas e colunas, respectivamente
+names(banco) # Para ver os nomes das variaveis
+```
+
+::: {.infobox .caution data-latex="{caution}"}
+Lembrando como os nomes estavam originalmente no banco:
+
+banco \<- select(dados,regiao=region, sexo=sex, idade_quinquenal=age_group, raca_cor=color_race, educ_mae=mother_edu_ens, ocup_mae=mother_occ, educ_pai=father_edu_ens, ocup_pai=father_occ, educ=level_study, pessoas=pv1, rendafa, ocup= code_occ_main, freq_esc= ever_attend, peso=weight, peso_pond=aweight, se_trab= c11_new, empregados=employed, estuda_atualmente=currently_attend)
+:::
+
+Alternativamente ao que vimos até agora, podemos usar a função skim, do pacote skimr.
+
+```{r skmr, echo=TRUE}
+library(skimr)
+skim(banco)
+```
+
+O que retirar das primeiras impressões?
+
+-   As categorias das das variáveis estão codificadas (tipo numérico); portanto, elas precisam ser rotuladas com apoio do dicionário de dados (documentação do banco).
+
+-   pessoas é numérica e temos um valor muito discrepante (997); isso também pode ser um código.
+
+-   educ, rendafa, ocup e estuda_atualmente tem valores faltantes (NAs ou missing data).
+
+Além disso, já vamos checar valores duplicados. Em condições ideais, o banco deveria ter uma variável única, identificadora. Acabamos não acrescentando uma variável desse tipo no banco, mas vou deixar o procedimento aqui de qualquer forma.
+
+```{r duplicata, echo=TRUE}
+sum(duplicated(banco))
+```
+
+Pare remover valores duplicados: **banco[!duplicated(banco),]** Lembrando a lógica do R: [linha, coluna]; o ponto de exclamação significa "tudo menos isto" ou "não isto". Então fica algo como: o banco é igual a banco sem os duplicados do banco.
+
+Vamos dar continuidade rotulando as variáveis categóricas para em seguida tratar as demais.
+
+### Rotulação das variáveis
+
+```{r rotulacao, echo=TRUE}
+
+banco <- banco %>% 
+  mutate(educ = case_when(
+    (estuda_atualmente == 1 & educ == 1) ~ "Fundamental incompleto ou menos",
+    (estuda_atualmente == 2 & educ == 1) ~ "Fundamental completo até médio incompleto",
+    (estuda_atualmente == 3 & educ == 1) ~ "Fundamental incompleto ou menos",
+    (estuda_atualmente == 1 & educ == 2) ~ "Fundamental completo até médio incompleto",
+    (estuda_atualmente == 2 & educ == 2) ~ "Médio completo até superior incompleto", 
+    (estuda_atualmente == 3 & educ == 2) ~ "Fundamental completo até médio incompleto", 
+    (estuda_atualmente == 1 & educ == 3) ~ "Médio completo até superior incompleto",
+    (estuda_atualmente == 2 & educ == 3) ~ "Superior completo ou mais",
+    (estuda_atualmente == 3 & educ == 3) ~ "Médio completo até superior incompleto",
+    (estuda_atualmente == 1 & educ == 4) ~ "Médio completo até superior incompleto",
+    (estuda_atualmente == 2 & educ == 4) ~ "Superior completo ou mais",
+    (estuda_atualmente == 3 & educ == 4) ~ "Médio completo até superior incompleto",
+    (estuda_atualmente == 1 & educ == 5) ~ "Superior completo ou mais",
+    (estuda_atualmente == 2 & educ == 5) ~  "Superior completo ou mais", 
+    (estuda_atualmente == 3 & educ == 5) ~ "Superior completo ou mais"), 
+    regiao = case_when(
+      (regiao == 1) ~"Norte", 
+      (regiao == 2) ~ "Centro-Oeste", 
+      (regiao == 3) ~"Nordeste", 
+      (regiao == 4) ~ "Sul",
+      (regiao == 5) ~ "Sudeste"), 
+    sexo = case_when(
+      (sexo == 1) ~ "Masculino",
+      (sexo == 2) ~ "Feminino"), 
+    idade_quinquenal = case_when(
+      (idade_quinquenal == 1) ~ "15 a 19 anos",
+      (idade_quinquenal == 2) ~"20 a 24 anos", 
+      (idade_quinquenal == 3) ~"25 a 29 anos"),
+    raca_cor = case_when(
+      (raca_cor == 1) ~ "Branca", 
+      (raca_cor == 2) ~ "Negra", 
+      (raca_cor == 3) ~ "Negra", 
+      (raca_cor == 4) ~ "Outros", 
+      (raca_cor == 5) ~ "Outros", 
+      (raca_cor == 6) ~ "Outros", 
+      (raca_cor == 7) ~ "Outros", 
+      (raca_cor == 8) ~ "Negra", 
+      (raca_cor == 9) ~ "Outros", 
+      (raca_cor == 10) ~"Outros", 
+      (raca_cor == 11) ~"Outros", 
+      (raca_cor == 997) ~"Outros"), 
+    educ_mae = case_when(
+      (educ_mae == 1) ~ "Ensino Fundamental ou menos", 
+      (educ_mae == 2) ~ "Ensino Médio ou técnico", 
+      (educ_mae == 3) ~ "Ensino Superior ou mais", 
+      (educ_mae == 4) ~ "Ensino Superior ou mais", 
+      (educ_mae == 9) ~ "Ensino Fundamental ou menos",
+      (educ_mae == 99) ~ "Não sabe"),
+    educ_pai = case_when(
+      (educ_pai == 1)~ "Ensino Fundamental ou menos", 
+      (educ_pai == 2)~ "Ensino Médio ou técnico", 
+      (educ_pai == 3)~ "Ensino Superior ou mais", 
+      (educ_pai == 4)~ "Ensino Superior ou mais", 
+      (educ_pai == 9)~ "Ensino Fundamental ou menos",
+      (educ_pai == 99)~ "Não sabe"),
+    ocup=case_when(
+      between(ocup, 1111, 3522) ~ "Classe 1", 
+      between(ocup, 4110, 5419) ~ "Classe 2",
+      between(ocup, 6111, 6225) ~ "Classe 3",
+      between(ocup, 7111, 8350) ~ "Classe 2",
+      between(ocup, 9111, 9996) ~ "Classe 3", 
+      between(ocup, 9997, 9999) ~ "Outros"),
+    ocup_mae = case_when (between(ocup_mae, 1111, 3522) ~ "Classe 1", 
+                          between(ocup_mae, 4110, 5419) ~ "Classe 2",
+                          between(ocup_mae, 6111, 6225) ~ "Classe 3",
+                          between(ocup_mae, 7111, 8350) ~ "Classe 2",
+                          between(ocup_mae, 9111, 9996) ~ "Classe 3", 
+                          between(ocup_mae, 9997, 9999) ~ "Outros"),
+    ocup_pai = case_when (between(ocup_pai, 1111, 3522) ~ "Classe 1",
+                          between(ocup_pai, 4110, 5419) ~ "Classe 2",
+                          between(ocup_pai, 6111, 6225) ~ "Classe 3",
+                          between(ocup_pai, 7111, 8350) ~ "Classe 2",
+                          between(ocup_pai, 9111, 9996) ~ "Classe 3", 
+                          between(ocup_pai, 9997, 9999) ~ "Outros"),
+    empregados = case_when(
+      empregados == 0 ~ "Não",
+      empregados == 1 ~ "Sim"),
+    classesocial = case_when(
+      classesocial == 1 ~ "Muito pobre",
+      classesocial == 2 ~ "Pobre",
+      classesocial == 3 ~ "Média baixa",
+      classesocial == 4 ~ "Média",
+      classesocial == 5 ~ "Média alta",
+      classesocial == 6 ~ "Alta",
+      classesocial == 9 ~ "NS/NR",
+      classesocial == 997 ~ "NS/NR"),
+    pessoas = ifelse(pessoas == 997, NA, pessoas))
+```
+
+Continuem com estuda_atualmente e setrab.
+
+### Como lidar com NAs: estratégias
+
+Tínhamos quatro colunas com valores faltantes: ocup, rendafa, ocup_pai e rendafa. Com o summary não conseguimos ver todos os NAs após a aplicação dos rótulos. Por esse motivo precisamos verificar de forma mais direta.
+
+Outra forma de checar NAs é fazer as somas de NAs para todas as variáveis.
+
+```{r sumNA, echo=TRUE}
+
+banco %>%
+  select(everything()) %>%  # substitua em select as vars de escolha, segundo seu objetivo
+  summarise_all(funs(sum(is.na(.))))
+```
+
+Com a soma de NAs, outras variáveis com valores faltante aparece. No caso, educ_pai e pessoas. Uma forma mais rápida de checar uma coluna individual é com o r base:
+
+```{r checkNA, echo=TRUE}
+
+sum(is.na(banco$rendafa))
+```
+
+### Tratamento de algumas das colunas com valores faltantes
+
+Importante prestarmos atenção no montante de NAs; se forem poucos, podemos só excluir esses casos. Se não (caso ultrapasse 5% do total de casos, por exemplo; mas outros critérios também podem ser válidos), devemos pensar em estratégias mais robustas. O mais importante é investigar o que pode estar acontecendo.
+
+Vamos começar com **ocupação**. No dicionário de dados, vemos que essa é uma resposta válida apenas para quem está empregado. Portanto, podemos substituir os NAs por "não se aplica", pois a resposta não faz sentido para quem declarou não estar ocupado no momento, então não necessariamente é um dado perdido. *Essa é uma solução específica a este banco e envolve conhecimento do dicionário de dados. A documentação da pesquisa é muitíssimo utilizada em todas as etapas da pesquisa.*
+
+```{r subNA, echo=TRUE}
+
+banco <- banco %>% replace_na(list(ocup = "não se aplica")) #substituindo NAs por "não se aplica)
+table(banco$ocup)
+```
+
+Poderíamos fazer o mesmo com ocupação do pai? O que vocês acham? (agregar à categoria 'outros', por exemplo).
+
+Agora vamos para **rendafa**, quem tem 63 NAs de partida. A variável renda tende a ser complicada e com muitos NAs em diversas pesquisas. Vamos checar o dicionario de dados. Valores variam de R\$100 a R\$32.000
+
+13 - nenhuma renda; 14 - Não sabe; 15 - Recusa.
+
+Não podemos usar o case_when como nos casos acima sob o risco de transformar a variável contínua em categórica. Vamos usar a função ifelse. O argumento dela é como segue:
+
+*Se a variavel assume x valor, atribua isso (senão), atribua aquilo.*
+
+rendafa = ifelse(rendafa == 13, 0, ifelse(rendafa == 14, NA, ifelse(rendada == 15, NA, rendafa)))
+
+Rendafa inicialmente tinha 63 NAS. Vamos checar de novo, dessa vez para todo o banco. (rodar o mesmo código de soma de NAs acima).
+
+Depois da transformação ainda temos 1335 valores faltantes de renda. Vamos investigar essa variável primeiro. Os valores 13, 14 e 15, como vimos, são códigos. Então apesar dessa ser uma variável quantitativa, vamos fazer uma tabela de frequência e ver se os valores faltantes estão concentrados nesses primeiros números. O padrão das tabelas e apresentacao crescente, dos valores mais baixos aos mais altos.
+
+```{r frerenda, echo=TRUE, include=FALSE}
+
+table(banco$rendafa)
+```
+
+A categoria 13 (Sem renda) tem 27 casos; a categoria 14 (Não sabe), 1139; a categoria 15 (NR), 133. Encontramos nosso problema. A categoria "não sabe" corresponde a um terço do banco. O banco tem duas variáveis que identificam renda e uma que identifica classe social (esta última de auto-declaração). A categoria de renda agrupada sofre de não respostas da mesma forma que a renda familiar em valores contínuos. Algumas soluções caberiam aqui: excluir ou substituir os valores faltantes.
+
+A estratégia de substituir também contém diversas alternativas: substituição pelo valor médio, pelo valor médio dos vizinhos, por modelagem, entre outras. Para efeitos do exercício, contudo, vamos aproveitar a variável de classe social do banco. Podemos converter "muito pobre", "pobre" etc. em valores de salário mínimo do ano de referência, 2013.
+
+```{r classesoc, echo=TRUE}
+
+table(banco$classesocial)
+```
+
+-   Salário mínimo em 2013 - R\$ 678,00
+
+Vamos substituir os valores usando como base o salário mínimo do ano.
+
+-   Muito pobre: até 2 SM - R\$ 678 (média entre renda 0 e 1356)
+-   Pobre: entre 2 até 4 SM - R\$ 2.034 (média entre 2 e 4 SM)
+-   Média baixa: entre 4 até 7 SM - R\$ 3.729
+-   Média: entre 7 até 10 SM - R\$ 5763
+-   Média alta: de 10 até 20 SM - R\$ 10.170
+-   Alta: acima de 20 SM - R\$ 13.561 ou R\$ 22.780 (média com o valor máximo)
+
+```{r rendaclass, echo=TRUE}
+
+banco <- banco %>% 
+  mutate(rendafa =
+           ifelse(rendafa == 13, 0,
+           ifelse(rendafa == 14 & classesocial == "Muito pobre", 678,
+           ifelse(rendafa == 14 & classesocial == "Pobre", 2034,
+           ifelse(rendafa == 14 & classesocial == "Média baixa", 3729,
+           ifelse(rendafa == 14 & classesocial == "Média", 5763,
+           ifelse(rendafa == 14 & classesocial == "Média alta", 10170,
+           ifelse(rendafa == 14 & classesocial == "Alta", 13561, rendafa))))))))
+```
+
+Agora vamos resolver os casos que não cumprem nenhum desses requisitos:
+
+```{r rendaclass2, echo=TRUE}
+
+banco <- banco %>% 
+  mutate(rendafa = 
+           ifelse(rendafa == 14, NA, 
+           ifelse(rendafa == 15, NA, rendafa)))
+```
+
+Agora podemos computar uma variável derivada com mais confiança. Uma delas é a renda per capita, por ela ter valores menos extremos e por ser medida mais comparável.
+
+```{r rendapercap, echo=TRUE}
+
+banco <- banco %>% 
+  mutate(rendapercap = (rendafa/pessoas))
+```
+
+Mais uma checagem de NAs.
+
+```{r checkNas2, echo=TRUE}
+
+banco %>%
+  select(everything()) %>%
+  summarise_all(funs(sum(is.na(.))))
+```
+
+Podemos remover os NAs (essa é uma decisão arbitrárias que nas pesquisas deve ser muito bem justificada). Mas antes vamos remover uma coluna que não será tratada.
+
+```{r removecol, echo=TRUE}
+
+banco <- select(banco, -rendarange)
+head(banco, n = 3)
+```
+
+Remoção dos NAs e novo summary.
+
+```{r removeNA, echo=TRUE}
+
+banco <- banco %>% drop_na()
+skim(banco)
+```
+
+## Análise exploratória
+
+### Tabelas de frequência para as variáveis categóricas
+
+A forma mais simples e frutífera de iniciar a análise é através das tabelas de frequência. Erros de rotulação podem ser identificados, e demais inconsistências que passaram despecebidas inicialmente podem aparecer. Vamos usar a biblioteca *formattable*, que é bem integrada com o universo do *tidyverse*. Mas vocês podem optar por outras bibliotecas também.
+
+```{r tabelas, echo=TRUE}
+
+library(formattable)
+regtab <- banco %>%
+  group_by(regiao) %>%
+  summarise(cnt = n()) %>%
+  mutate(freq = formattable::percent(cnt / sum(cnt))) %>% 
+  arrange(desc(freq))
+print(regtab)
+
+sexotab <- banco %>%
+  group_by(sexo) %>%
+  summarise(cnt = n()) %>%
+  mutate(freq = formattable::percent(cnt / sum(cnt))) %>% 
+  arrange(desc(freq))
+print(sexotab)
+```
+
+Continuem com mais algum exemplo.
+
+Em bancos com muitas colunas, uma demanda pode ser a automatização da tarefa de gerar tabelas de frequência simples. O pacote *janitor* tem uma boa solução para isso (janitor é uma biblioteca de limepza e tratamento de dados).
+
+```{r jan, echo=TRUE}
+
+library(janitor)
+```
+
+Vamos usar a função de base tabyl do janitor. Elar etorna o n (frequência ou count) e percentual. Se há dados faltantes (NAs), ela calcula o percentual total e o percentual válido.
+
+```{r jan2, echo=TRUE}
+tabyl(banco$sexo)
+```
+
+Para a automatização vamos combinar uma função do R com a função do janitor. Da forma que está, a função pode ser reproduzida para demais bancos de dados. Apenas em "map" e no parâmetro de data frame é que substituímos com nossos próprios valores.
+
+```{r jan3, echo=TRUE}
+# A função
+tabyl_n <- function(df, x) { #df de dataframe
+  df %>% 
+    tabyl({{x}}) %>%
+    adorn_pct_formatting(digits = 1) # converte freqs para props
+}
+
+# Aplicação da função; map "mapeia" as colunas para os quais a função será aplicada
+map(c("regiao", "sexo", "idade_quinquenal", "raca_cor", "educ_mae",
+      "ocup_mae", "educ_pai",  "ocup_pai", "classesocial", "ocup",
+      "educ", "empregados"), ~tabyl_n(banco, .x))
+```
+
+### Visualização gráfica de variáveis categóricas
+
+**O ggplot2, gramática dos gráficos**
+
+*"ggplot2 is designed to work in a layered fashion, starting with a layer showing the raw data then adding layers of annotations and statistical summaries. It allows you to produce graphics using the same structured thinking that you use to design an analysis, reducing the distance between a plot in your head and one on the page. [...].*
+
+*In ggplot2, the expressions used to create a new graphic are composed of higher-level elements like representations of the raw data and statistical transformations, and can easily be combined with new datasets and other plots. [...].*
+
+*Wilkinson (2005) created the grammar of graphics to describe the deep features that underlie all statistical graphics. The grammar of graphics is an answer to a question: what is a statistical graphic? The layered grammar of graphics (Wickham, 2009) builds on Wilkinson's grammar, focussing on the primacy of layers and adapting it for embedding within R. In brief, the grammar tells us that a statistical graphic is a mapping from data to aesthetic attributes (colour, shape, size) of geometric objects (points, lines, bars). The plot may also contain statistical transformations of the data and is drawn on a speciﬁc coordinate system. Faceting can be used to generate the same plot for diﬀerent subsets of the dataset. It is the combination of these independent components that make up a graphic." (Wickham, 2009)*
+
+[Fonte](https://ggplot2-book.org/)
+
+Tradução livre
+
+"O ggplot2 foi contruído para operar em camadas, começando com uma camada que contém os dados brutos seguido pela adição de camadas com anotações e sínteses estatíticas. Isso permite que você produza gráficos usando o mesmo raciocínio empregado no desenho da análise, o que reduz a distância de um gráfico na sua cabeça e aquele na página (tradução suuuper livre) [...].
+
+No ggplot2, as expressões usadas para criar um novo gráfico são compostas de elementos de nível mais elevado como representações dos dados brutos e transformações estatíticas, que podem ser facilmente combinados com novos datasets e outros gráficos [...].
+
+Wilkinson (2005) criou a gramática dos gráficos para descrever os atributos mais profundos subjacentes a todos os gráficos estatísticos. A gramática dos gráficos é uma resposta à pergunta: o que é um gráfico estatístico? A gramática dos gráficos em camadas (Wickham, 2009) se baseia na gramática de Wilkinson, com foco na primazia das camadas e adapatação à interface R. Resumidamente, a gramática nos diz que um gráfico estatístico é um mapeamento que vai dos dados aos atributos estéticos (cor, forma, tamanho) de objetos geométricos (pontos, linhas, barras). O gráfico ainda pode conter transformações estatíticas dos dados, desenhado num sistema de coordenadas específico. O faceting pode ser usado para gerar o mesmo gráfico para diferentes subsets do banco. É a combinação dessas componentes independentes que faz um gráfico."
+
+-   Elementos fundamentais
+
+**data** - os dados que vocês quer representar (seu banco de dados)
+
+**aesthetic mappings** - descreve como as variáveis no banco serão representadas. Qual estará no eixo x? Qual no eixo y? Você quer discriminar a representação segundo fatores de uma terceira variável (fill e color)? Para cada atributo estético há uma função *scale* específica. Isso vai ficar mais evidente mais para frente.
+
+**geoms** - representa o que quero ver no gráfico: pontos, barras, linhas, polígonos etc.
+
+**stats** - formar de sumarizar o os dados, como bins do histograma, contagem de frequência, média etc. É opcional mas bastante útil.
+
+**scales** - mapeia valores no espaço dos dados para um espaço estético, seja em cor, tamanho ou forma. Scales pode desenhar legenda ou eixos, por exemplo. whether it be colour, or size, or shape.
+
+**coord** - o sistema de coordenadas descreve como as coordenadas dos dados serão mapeadas no plano gráfico. Usualmente o plano cartesiano é usado, mas há alternativas (como no gráfico de pizza, por exemplo).
+
+**faceting** - especifica como e se podemos partir o banco em subsets e como representá-los.
+
+#### Gráficos de barra e de pizza
+
+##### Gráficos de barra
+
+-   Sexo - Plot base, a representação mais simples
+
+```{r plotbase, echo=TRUE}
+
+ggplot(banco, aes(x = sexo)) + geom_bar() #depois do "+" já estamos mobilizando as camadas
+```
+
+Construímos o restante do gráfico a partir desse primeiro bloco:
+
+ggplot(data = banco, aes(x = var1, y = var2, color = var3)) #fill ou color são opcionais; por vezes também não precisamos do x e y de uma vez só.
+
+-   Aos poucos vamos deixar os gráficos mais complexos, com mais camadas.
+
+A partir dessa mesma ideia de gráfico inicial vamos mudar as cores da barra e deixar as categorias em ordem decrescente. (Isso ao mesmo tempo em que salvamos o arquivo em png no código do curso).
+
+
+![](/cloud/project/Imagens/drake_reorder.png)
+
+
+-   Regiões
+
+```{r regioes, echo=TRUE}
+
+ggplot(banco, aes(x = reorder(regiao, regiao,
+                              function(x)-length(x)))) +
+  geom_bar(stat = "count", width = 0.7, fill = "#697a55", position = "dodge") +
+  theme_light() +
+  ggtitle("Regiões") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("") + ylab("Frequência")
+```
+
+Troquem: stat = "identity"; position = "fill"; mudar o parâmetro de width para outro número; retirar o theme(plot.title...); retirar o ggtitle; retirar xlab e ylab. Façam as mudanças uma vez de cada, para que vocês vejam o que muda em cada caso.
+
+Podemos colocar o número da frequência nas barras.
+
+-   Classe social
+
+```{r classoc, echo=TRUE}
+
+ggplot(banco, aes(x = reorder(classesocial, classesocial,
+                              function(x)-length(x)))) +
+  geom_bar(stat = "count", width = 1, color = "black", fill = "#dba3a3") +
+  theme_light() +
+  labs(title = "Classe \n social", x = "", y = "Frequência") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  geom_text(stat='count', aes(label=..count..), vjust = -1, color = "black",
+            position = position_dodge(0.9), size=3.5) # adicionar detalhes
+```
+
+Retirem o parâmetro fill e deixem apenas o color. Notem que para essas mudanças de cor eles não estão dentro do argumento aes. Tentem trocar (colocar o argumento color = "black" dentro dos parênteses do *aes* acima). O que acontece?
+
+Por vezes a representação por frequências pode não ser a mais informativa, ou pode não destacar apropriadamente diferenças entre grupos. Vamos ver duas maneiras de transformar as frequências em percentuais: diretamente no ggplot, usando argumentos do stat e com apoio do dplyr - ou seja, transformando o dado antes de plotar.
+
+-   Raça/cor (percentual diretamente no ggplot com stat)
+
+```{r racacorperc, echo=TRUE}
+
+ggplot(banco, aes(x = raca_cor)) + 
+  theme_classic() +
+  geom_bar(aes(y = after_stat(count / sum(count))), color="#697a55", fill="white") +
+  scale_y_continuous(labels = scales::percent) + #para cada aes um correspondente scale
+  labs(x = "", y = "Percentual")
+```
+
+A solução mais certeira acaba sendo calcular os percentuais de antemão usando os recursos do tidyverse, como com o dplyr. Como o ggplot2 foi construído com a mesma lógica, as duas bibliotecas conversam bem.
+
+-   Educação da mãe (percentual com dplyr)
+
+```{r edmaeperc, echo=TRUE}
+
+educmae <- banco %>%  
+  count(educ_mae) %>%  
+  mutate(pct = n / sum(n)) %>%   
+  ggplot(aes(x = educ_mae, fill = educ_mae)) + 
+  geom_col(aes(y = pct)) +
+  scale_y_continuous(labels = scales::percent)
+```
+
+*(Bônus: \|\> essa é outra forma de escrever o pipe)*
+
+Perceberam que rodamos o código acima e nada aconteceu? Criar um objeto mais simples como base do gráfico pode ajudar a visualização quando as especificações adicionais do gráfico ficarem mais complexas. É o que vai acontecer agora que vamos adicionar mais detalhes. Vamos mudar aspectos da legenda, mudar labels e a paleta de cores.
+
+```{r edmaeperc2, echo=TRUE}
+
+educmae + theme_light() +
+  labs(x = "", y = "", fill = "Educação da mãe", caption = "Fonte: OIT, 2013.") +
+  scale_x_discrete(breaks = c("Ensino Fundamental ou menos","Ensino Médio ou técnico","Ensino Superior ou mais", "Não sabe"),
+                   labels = c("E. Fundamental \n ou menos", "E. Médio \n ou técnico", "E. Superior \n ou mais", "Não \n sabe")) + #esse scale se refere ao eixo x
+  theme(legend.key.size = unit(0.3, 'cm'), # muda o tamanho dos quadradinhos da legenda
+        legend.key.height = unit(0.3, 'cm'), # muda a altura dos quadradinhos da legenda
+        legend.key.width = unit(0.3, 'cm'), # muda a largura dos quadradinhos da legenda
+        legend.title = element_text(size = 10), # muda o tamanho da fonte do título da legenda
+        legend.text = element_text(size = 8)) + # muda o tamanho da fonte do texto da legenda
+  scale_fill_brewer(palette = "Dark2") # esse scale_fill... se refere ao aes(fill=)
+```
+
+Dêem um print(educmae) e vejam o gráfico original, sem as especificações. As mudanças sugeridas fazem sentido para vocês?
+
+##### Gráficos de pizza
+
+-   Educação do pai (sem percentual)
+
+```{r edpai, echo+TRUE}
+
+banco %>% 
+  ggplot(aes(x = "", fill = educ_pai)) + 
+  geom_bar(position = "fill", width = 1) + 
+  coord_polar(theta = "y") + #aqui já não estamos no plano cartesiano convencional
+  labs(title = "",
+    x = "", 
+    y = "",
+    fill = "Educação do pai") +
+  theme_void() +
+  scale_fill_brewer(palette = "Dark2")
+```
+
+Substituam o theme_void() por qualquer outro e vejam o que acontece.
+
+-   Educação do pai com percentual
+
+Vamos fazer uma transformação prévia do dado (parecido com o que fizemos acima), mas alocando para uma tabela à parte (no formato data.frame).
+
+```{r edpai2, echo+TRUE}
+
+educpai <- banco %>% 
+  group_by(educ_pai) %>% # Variável a ser transformada
+  count() %>% 
+  ungroup() %>% 
+  mutate(perc = `n` / sum(`n`)) %>% 
+  arrange(perc) %>%
+  mutate(labels = scales::percent(perc))
+print(educpai)
+```
+
+```{r edpai3, echo=TRUE}
+
+ggplot(educpai, aes(x = "", y = perc, fill = educ_pai)) + # mudamos o banco de referência
+  geom_col() +
+  geom_text(aes(label = labels),
+            position = position_stack(vjust = 0.5)) +
+  coord_polar(theta = "y") +
+    labs(title = "",
+         x = "", 
+         y = "",
+         fill = "Educação do pai") +
+    theme_void() +
+    scale_fill_brewer(palette = "Dark2") 
+```
+
+### Visualização gráfica das variáveis numéricas (univariada)
+
+#### Histogramas e boxplots
+
+Vamos ver os mais simples primeiro, sem muitas camadas: histograma, boxplot e densidade.
+
+-   Histograma
+
+```{r hist, echo=TRUE}
+ggplot(banco, aes(x = rendapercap)) + geom_histogram()
+```
+
+-   Boxplot
+
+```{r boxplot, echo=TRUE}
+ggplot(banco, aes(y = rendapercap)) + geom_boxplot()
+```
+
+-   Densidade
+
+```{r density, echo=TRUE}
+ggplot(banco, aes(x = rendapercap)) + geom_density()
+```
+
+Recordar Estatística para Ciências Sociais é essencial! Alguém me diz o que cada linha no boxplot significa, vamos lá :D
+
+-   Histograma com destaque da média
+
+```{r histmean, echo=TRUE}
+
+ggplot(banco, aes(x = rendapercap)) + geom_histogram(binwidth = 1, color = "#a02a1e", fill = "#a02a1e") + 
+  geom_vline(aes(xintercept = mean(rendapercap)),
+             color = "black", linetype = "dashed", size=1) +
+  theme_light() +
+  labs(x = "Renda per capita", y = "Frequência", title = "Renda per capita (e média)") +
+  annotate("text", x = 600, y = 125, label = "média", angle = 90) # anotação manual mesmo!
+  
+mean(banco$rendapercap) # pistas sobre onde anotar no eixo x
+```
+
+-   Boxplot sem outliers: como modificar os limites do eixo y (ou x, a depender dos objetivos)
+
+```{r boxlotout, echo=TRUE}
+
+ggplot(banco, aes(y = rendapercap)) + geom_boxplot(fill = "#30407a") +
+ylim(0, 6000) + # limites do eixo y, inferior e superior
+  theme_light() +
+theme(axis.ticks.x = element_blank(), #aqui estou removendo algumas anotações do eixo x
+      axis.text.x = element_blank(),
+      plot.title = element_text(hjust = 0.5), text = element_text(family = "Times New Roman")) + #aqui estou centralizando o título e mudando a fonte, útil para a versão final dos gráficos
+  labs(x = "", y = "Renda per capita", title = "Distribuição da renda per capita")
+```
+
+-   Densidade com transparência
+
+```{r density2, echo=TRUE}
+
+ggplot(banco, aes(x = rendapercap)) + 
+  geom_density(color = "black", fill = "#76949f", alpha = 0.4) + #alpha controla a "solidez" das cores; valores abaixo de 1 são mais transparentes
+  theme_light() +
+  labs(x = "Renda per capita", y = "Densidade")
+```
+
+-   Histograma com densidade (combinação de geoms)
+
+```{r histdens, echo=TRUE}
+
+ggplot(banco, aes(x = rendapercap)) + 
+  geom_histogram(aes(y = ..density..),
+                 colour = 1, fill = "white",
+                 binwidth = 30) +
+  geom_density(lwd = 1.2,
+               linetype = 2,
+               colour = 2) +
+theme_light() +
+labs(x = "Renda per capita", y = "Função densidade", 
+     title = "Distribuição da renda per capita")
+```
+
+### O que pode estar associado à condição de estar inserido no mercado de trabalho para os jovens? (cruzamento entre variáveis)
+
+#### Com as variáveis categóricas
+
+Aqui podemos fazer tabelas cruzados e mais alguns gráficos específicos para responder uma questão de pesquisa. Só vamos retomar como é a distribuição da variável em análise:
+
+```{r empreg, echo=TRUE}
+
+table(banco$empregados)
+```
+
+-   Tabelas cruzadas (com outras variáveis categóricas)
+
+-   Condição de emprego por sexo, usando o janitor
+
+```{r sexojan, echo=TRUE}
+
+banco %>%
+  tabyl(sexo, empregados)
+```
+
+-   Mais complexa
+
+```{r sexojan2, echo=TRUE}
+
+# Mais complexa
+library(flextable)
+
+banco %>%
+  tabyl(sexo, empregados) %>% 
+  adorn_totals(where = "row") %>% 
+  adorn_percentages(denominator = "col") %>% 
+  adorn_pct_formatting() %>% 
+  adorn_ns(position = "front") %>% 
+  adorn_title(
+    row_name = "Sexo",
+    col_name = "Empregago",
+    placement = "combined") %>% # para imprimir como imagem
+  flextable::flextable() %>%    # converte para uma imagem bonita
+  flextable::autofit()          # formata uma linha por vez
+```
+
+-   Com o dplyr
+
+```{r sexodplyr, echo=TRUE}
+
+sexo_emprego <- banco %>%
+  group_by(empregados) %>%   # agrupapelo resultado
+  count(sexo) %>%
+  mutate(percent = scales::percent(n / sum(n))) # calculate percent - note the denominator
+
+print(sexo_emprego)
+```
+
+O formato de dados do sexo_emprego é o "long" (comprido), em vez de "wide" (largo). Pode ser mais fácil gerar gráficos dessa forma a depender do caso.
+
+-   Vamos plotar esta útima tabela (que está em formato data.frame)
+
+```{r sexoemp, echo=TRUE}
+
+ggplot(data = sexo_emprego, aes(x = empregados, y = percent, fill = sexo)) + 
+  geom_bar(stat = "identity", position = "dodge") #aqui já transformei o dado, então com o stat="identity" eu garanto que o stat não vai fazer mais nenhuma transformação com ele
+```
+
+Troquem o percent pelo n e vejam a diferença. Coloquem título no gráfico e labels nos eixos x, y e legenda (dica: para legenda, o comando pode ser "fill" ou "color" - qual é a correta nesse caso?)
+
+Bônus: troquem o tema do gráfico.
+
+-   Região
+
+```{r reg, echo=TRUE}
+
+reg <- ggplot(banco, aes(x = regiao, fill = empregados)) + geom_bar(position = "fill") +
+  labs(x = "", y = "Proporção", fill = "Empregado") +
+  theme_light() +
+  scale_fill_manual(values = c("#f0e8d7", "#a02a1e"))
+
+print(reg)
+```
+
+-   Região e sexo com o facetting
+
+```{r regsex, echo=TRUE}
+
+reg + facet_grid(cols = vars(sexo)) +
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+```
+
+-   Região e raça/cor
+
+```{r regrac, echo=TRUE}
+
+reg + facet_grid(cols = vars(raca_cor)) +
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+```
+
+-   Idade com percentual
+
+```{r idadeemp1, echo=TRUE}
+
+idade <- banco %>% 
+  group_by(idade_quinquenal) %>%   
+  count(empregados) %>%     
+  mutate(percent = scales::percent(n / sum(n)))
+print(idade)
+
+idade_plot <- ggplot(idade, aes(x = idade_quinquenal, y = percent, fill = empregados)) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "", y = "Percentual", fill = "Empregado") +
+  theme_light() +
+  scale_fill_manual(values = c("#2d3f2f", "#ccd2e6"))
+print(idade_plot)
+```
+
+-   Idade com sexo e percentual (facetting)
+
+```{r idadeemp2, echo=TRUE}
+
+idade2 <- banco %>% 
+  group_by(idade_quinquenal, sexo) %>%    
+  count(empregados) %>% 
+  mutate(percent = scales::percent(n / sum(n)))
+print(idade2)
+
+ggplot(idade2, aes(x = idade_quinquenal, y = percent, fill = empregados)) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "", y = "Percentual", fill = "Empregado") +
+  theme_light() +
+  scale_fill_manual(values = c("#2d3f2f", "#ccd2e6")) + 
+  
+  facet_grid(cols = vars(sexo)) +
+  theme(axis.text.x = element_text(angle = 45, hjust=1)) # ajusta o ângulo dos labels no eixo x
+```
+
+-   Idade com raça/cor e percentual (facetting)
+
+```{r idadeemp3, echo=TRUE}
+
+idade3 <- banco %>% 
+  group_by(idade_quinquenal, raca_cor) %>%   # group by outcome 
+  count(empregados) %>%      # group and count by age_cat, and then remove age_cat grouping
+  mutate(percent = scales::percent(n / sum(n)))
+print(idade3)
+
+ggplot(idade3, aes(x = idade_quinquenal, y = percent, fill = empregados)) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "", y = "Percentual", fill = "Empregado") +
+  theme_light() +
+  scale_fill_manual(values = c("#2d3f2f", "#ccd2e6")) + 
+
+  facet_grid(cols = vars(raca_cor)) +
+  theme(axis.text.x = element_text(angle = 45, hjust=1)) # o hjust=1 impede que a inclinação ultrapasse a área do gráfico
+```
+
+-   Vamos inverter a ordem de agrupamento entre idade e condição de emprego
+
+```{r idade4, echo=TRUE}
+
+idade4 <- banco %>% 
+  group_by(empregados) %>%   # group by outcome 
+  count(idade_quinquenal) %>%      # group and count by age_cat, and then remove age_cat grouping
+  mutate(percent = scales::percent(n / sum(n)))
+print(idade4)
+
+ggplot(idade4, aes(x = idade_quinquenal, y = percent)) + 
+  geom_bar(stat = "identity", position = "dodge", fill = "#2d3f2f") +
+  labs(x = "", y = "Percentual") +
+  theme_light() +
+  facet_grid(cols = vars(empregados)) +
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+```
+
+Ficou melhor? O que vocês acham?
+
+-   Educação dos pais: plotando mais de um gráfico na mesma imagem
+
+```{r edpais, echo=TRUE}
+
+library(gridExtra)
+
+# Educação
+edmae <- ggplot(banco, aes(x = educ_mae, fill = empregados)) + geom_bar(position = "dodge") +
+  ylim(0, 1050) + #manter os dois gráficos na mesma escala
+  labs(x = "", y = "Frequência", fill = "Filho empregado?", title = "Educaçao da mãe") +
+  scale_fill_manual(values = c("#d9b268", "#6e3b2a")) +
+  theme_light() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        legend.position = "bottom") # posição da legenda: embaixo
+print(edmae)
+  
+edpai <- ggplot(banco, aes(x = educ_pai, fill = empregados)) + geom_bar(position = "dodge") +
+  ylim(0, 1050) +
+  labs(x = "", y = "", fill = "Filho empregado?", title = "Educação do pai") +
+  scale_fill_manual(values = c("#d9b268", "#6e3b2a")) +
+  theme_light() +
+  theme(axis.text.x = element_text(angle = 90, hjust=1),
+        legend.position = "bottom")
+print(edpai) 
+
+# Juntando os dois plots (educação da mãe e do pai e situação de emprego)
+grid.arrange(edmae, edpai, nrow = 1) #nrow é número de linhas; também poderia usar ncol
+```
+
+-   O mesmo com ocupação dos pais
+
+```{r ocupais, echo=TRUE}
+
+# Ocupação
+ocmae <- ggplot(banco, aes(x = ocup_mae, fill = empregados)) + geom_bar(position = "dodge") +
+  ylim(0, 1100) +
+  labs(x = "", y = "Frequência", fill = "Filho empregado?", title = "Ocupação da mãe") +
+  scale_fill_manual(values = c("#ccd2e6", "#2d3f2f")) +
+  theme_light() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom")
+print(ocmae)
+
+ocpai <- ggplot(banco, aes(x = ocup_pai, fill = empregados)) + geom_bar(position = "dodge") +
+  ylim(0, 1100) +
+  labs(x = "", y = "", fill = "Filho empregado?", title = "Ocupação do pai") +
+  scale_fill_manual(values = c("#ccd2e6", "#2d3f2f")) +
+  theme_light() +
+  theme(axis.text.x = element_text(angle = 45, hjust=1),
+        legend.position = "bottom")
+print(ocpai) 
+
+# Juntando os dois plots (ocupação dos pais e situação de emprego)
+grid.arrange(ocmae, ocpai, nrow = 1)
+```
+
+Às vezes nos deparamos com casos em que uma das categorias de uma variável tem pouquíssimos casos em comparação com as demais, o que pode poluir a visualização do gráfico. É o que acontece com a categoria NS/NR de classe social. Podemos operar uma transformação similar com a que fizemos até agora (uso dos percentuais com o dplyr), mas apenas para o gráfico converter valores muito baixos em NAs, sem criar um novo objeto data.frame. Também podemos fazer isso sem transformar a variável no banco como um todo.
+
+```{r classescoialNA, echo=TRUE}
+
+banco %>% #notem que não estou transformando o banco (banco <- banco %>% ...)
+  mutate(classesocial = 
+           ifelse(classesocial == "NS/NR", NA, classesocial)) %>% 
+  drop_na(classesocial) %>% #eliminando os NAs da transformação acima
+ggplot(aes(y = factor(classesocial, levels = c("Muito pobre", "Pobre", "Média baixa", "Média",
+                                                "Média alta", "Alta")), #definição da ordem
+                fill = empregados)) + geom_bar(position = "dodge") +
+  labs(x = "Frequência", y = "", fill = "Empregados", title = "Condição de emprego por classe social") +
+  scale_fill_manual(values = c("dark grey", "forest green")) +
+  theme_light()
+```
+
+E assim como no caso de educação e ocupação dos pais, algumas categorias têm maior destaque pelo seu volume maior no banco. Por isso é sempre interessante também verificar a distribuição percentual.
+
+```{r classesocialperc, echo=TRUE}
+
+banco %>%
+  tabyl(classesocial, empregados) %>% 
+  adorn_totals(where = "row") %>% 
+  adorn_percentages(denominator = "col") %>% 
+  adorn_pct_formatting() %>% 
+  adorn_ns(position = "front") %>% 
+  adorn_title(
+    row_name = "Classe social",
+    col_name = "Empregago",
+    placement = "combined") %>% 
+  flextable::flextable() %>%    
+  flextable::autofit()
+```
+
+#### Com as variáveis numéricas
+
+A representação mais simples novamente - Renda per capita e condição de emprego:
+
+```{r rendemp, echo=TRUE}
+
+ggplot(banco, aes(x = empregados, y = rendapercap)) + geom_boxplot()
+```
+
+Não parece que temos muitas diferenças entre os grupos, certo? Vamos checar os números propriamente.
+
+-   Cálculo da média e demais medidas de tendência central e dispersão
+
+```{r rendamean, echo=TRUE}
+
+statsrenda <- banco %>% 
+  group_by(empregados) %>% #o group_by apresenta os  resultados separados pelas categorias dessa variável
+  summarise(mean = mean(rendapercap), sd = sd(rendapercap), 
+            median = median(rendapercap), n = n(), se = (sd / sqrt(n)))
+```
+
+mean = média
+
+median = mediana
+
+sd = desvio padrão *(standard deviation)*
+
+n = número, frequência
+
+se = erro padrão *(standard error)*
+
+*"Standard error of the mean (SEM) measures how far the sample mean (average) of the data is likely to be from the true population mean. The SEM is always smaller than the SD."*
+
+O erro padrão mede o quão longe a média amostral dos dados pode estar da média verdadeira da população. O erro padrão é sempre menor do que o desvio padrão. Alguém pode me dizer por que vamos usar o erro padrão nas barras de erro do próximo gráfico?
+
+Enfim, de fato, para os que estão empregados a renda per capita familiar é ligeiramente maior. Vamos fazer um gráfico de barras com as **médias** em conjunto com barras de erro informadas pelo **erro padrão**.
+
+```{r serenda, echo=TRUE}
+
+ggplot(statsrenda, aes(x = empregados, y = mean)) + 
+  geom_bar(position = "dodge", stat="identity", fill = "#b2c6ba") +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se),
+                width=.2,                    # Width of the error bars
+                position=position_dodge(.9)) +
+  labs(x = "Situação de emprego", y = "Renda familiar per capita média", title = "Rendimendo familiar per capita \n por situação de trabalho (e erro padrão)") +
+  theme_light() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+# 3- Estatística inferencial
+
+## Qui-quadrado
+
+O teste qui-quadrado testa a hipótese nula de que as populações não diferam quanto às frequências de ocorrência de determinada caracterísitca. No nosso caso, a hipótese nula é a de que não há diferença de situação de emprego com relação ao sexo ou à raça/cor da população; as diferenças de frequência observadas seriam fruto apenas de erro amostral. A hipótese de pesquisa, por outro lado, afirma que as diferenças encontradas na amostra refletem diferenças populacionais reais entre os grupos, conforme captadas pelas diferenças relativas de frequência. O qui-quadrado se preocupa com as distinções entre frequências esperadas e observadas. As frequências esperadas se referem aos termos da hipótese nula, em que se espera que as frequências relativas (ou proporções) sejam as mesmas de um grupo para outro (relativamente). Somente rejeitamos a hipótese nula quando a diferença entre os valores esprados e observados é grande o bastante (ver detalhes de como o qui-quadrado é calculado em Levin, 2014).
+
+```{r quiq, echo=TRUE}
+
+library(descr)
+# Sexo
+chisq.test(table(banco$sexo, banco$empregados))
+
+# raça/cor
+chisq.test(table(banco$raca_cor, banco$empregados))
+```
+
+x = independente; y = dependente. A ordem nas tabelas é: x, y; linha, coluna.
+
+-   Agora vamos para uma tabela com os valores observados e esperados
+
+```{r quiq2, echo=TRUE}
+# Sexo
+crosstab(banco$sexo, banco$empregados,  expected = TRUE, chisq = TRUE, plot = FALSE)
+
+# Raça/cor
+crosstab(banco$raca_cor, banco$empregados,  expected = TRUE, chisq = TRUE, plot = FALSE)
+```
+
+A biblioteca *janitor* tem o mesmo comando crosstabs que usamos agora, mas nosso objetivo aqui é usar a função crosstabs do *descr*. Uma forma de resolver isso no futuro é chamando a função diretamente de um pacote específico. Então poderíamos fazer:
+
+**descr::crosstabs [...]**
+
+Atenção também com o tamanho das caselas! Qui-quadrado com variável que têm muitas categorias pode gerar combinações em que o número de observações em determinadas caselas é muito baixo; isso afeta os resultados e interpretação. Evitar caselas de valor esperado com menos de 5 casos cada. Quando temos tables 2 x 2 (como a que usamos nos exemplos) e alguma frequência *esperada* é menor do que 10 mas maior do que 5, podemos usar a correção de Yates (é possível fazer com o descr mesmo).
+
+**Requisitos para o teste qui-quadrado:**
+
+-   Comparação entre duas ou mais amostras;
+-   Dados nominais;
+-   Amostra aleatória;
+-   Células de valores esperados não muito baixos.
+
+## Regressão linear simples (com gráfico)
+
+O coeficiente de correlação de Pearson (que é o default do comando *cor* do r) oferece uma medida precisa da força e direção de associação na amostra em análise. Segue a mesma lógica do teste de hipóteses visto acima, mas a hipótese nula aqui afirma que a *associação* obtida entre duas variáveis é fruto apenas do acaso/erro amostral. Ou seja, a hipótese nula é a de que não há correlação entre as categorias postas à prova na população. No teste de correlação de Pearson, o coefeiciente de valor zero é o que representa a hipótese nula.
+
+*Mede a associação entre x e y, não a direção de causalidade entre x e y.*
+
+A regressão linear simples é similar à correlação na medida em que interesse ainda reside na força de associação entre duas variáveis. Mas na regressão também há interesse em conhecer a natureza dessa relação. Uma variável é definida como dependente (y) e outra como independente (x). Nesse caso, acredita-se que uma variável influencia a outra. A equação da regressão é a seguinte:
+
+Y = a + bX + e
+
+Ela quer dizer que os valores assumidos pelas variável dependente são a soma de três componentes:
+
+1)  Um valor base - ou intercepto, ou constante. É o valor esperado de Y quando x = 0. Ou seja, é o valor base porque é o que Y seria sem levar em consideração valores de x.
+
+2)  O termo b, que é a inclinação da reta, também chamado de coeficiente da regressão para os valores de x. Representa o montante que esperamos que Y mude (aumento ou diminuição) para cada aumento em unidade de x.
+
+3)  O erro ou os resíduos. É toda a variação de Y que não pode ser explicada pelo intercepto ou por bx.
+
+**Requisitos para a correlação e para a regressão linear simples**
+
+-   Relação linear entre x e y;
+-   Dados intervalares (x e y);
+-   Amostragem aleatória;
+-   y deve ter distribuição normal; problema contorvável quando a amostra excede 30 casos.
+
+**Como checar**
+
+-   Análise do gráfico de dispersão;
+-   class(banco\$variável) - retorna o tipo de variável em questão, se numérica, nominal etc.
+-   Checagem da metodologia do estudo escolhido;
+-   Teste de Shapiro no r (p-valor \< 0,05 quer dizer que os dados não são normalmente distribuídos - aqui não "queremos" rejeitar a hipótese nula).
+
+```{r shapiro, echo=TRUE}
+
+shapiro.test(banco$rendapercap)
+```
+
+-   Cálculo do coeficiente de correlação
+
+```{r cor, echo=TRUE}
+
+cor(banco$pessoas, banco$rendapercap)
+```
+
+-0.3275096 é um coeficiente de correlação baixo e negativo. Ou seja, quando maior o número de pessoas no domicílio, menor a renda.
+
+Agora vamos para a regressão linear simples.
+
+**regressao \<- lm(formula = y(dependente) \~ x(independente), data = seubanco)**
+
+```{r reg2, echo=TRUE}
+
+reg <- lm(formula = rendapercap ~ pessoas,
+        data = banco)                      
+
+summary(reg)
+```
+
+-   Vamos gerar o valor do intercepto e da inclinação da reta:
+
+```{r coefs, echo=TRUE}
+
+coeff <- coefficients(reg)          
+intercept <- coeff[1]
+slope <- coeff[2]
+```
+
+-   Representação gráfica base (vamos acrescentar a linha da regressão em seguida)
+
+```{r regplot, echo=TRUE}
+
+reg_plot <- ggplot(banco, aes(pessoas, rendapercap)) +   
+  geom_point() +
+  ylim(-200, 11500) +
+  labs(x = "Número de pessoas no domicílio", y = "Renda familiar per capita", 
+       title = "Relação entre renda familiar per capita \n e número de pessoas no domicílio") +
+  theme_light() +
+  theme(plot.title = element_text(hjust = 0.5))
+print(reg_plot)
+```
+
+-   Agora vamos acrescentar a linha de regressão ao plot
+
+```{r regplot2, echo=TRUE}
+
+reg_plot + geom_abline(intercept = intercept, slope = slope, color = "#a02a1e", 
+                linetype = "dashed", size=1.5)
+```
+
+# Fontes de erro, um ligeiro apanhado
+
+-   Atenção nas variáveis e argumentos alocados em **aes()** - e em qual camada está, se na base ou nos geoms.
+
+-   Atenção à classe da variável: não é possível somar ou dividir valores com variáveis categóricas; só é possível fazer isso com as suas *frequências*. Além disso, às vezes uma variável numérica pode ter sido importada erroneamente como categórica, ou como integer de algum outro tipo (int64). Se for esse o caso é preciso convertê-la antes. Por isso é sempre bom checar com o *class* ou similar. Além disso, algumas variáveis categóricas podem ser importadas como numéricas, como no nosso caso. Se você não optar pela rotulação, deve convertê-las como categóricas da mesma forma. Um exemplo:
+
+-   **class(banco\$idade_quinquenal)**
+
+-   **banco\$idade_quinquenal \<- as.character(banco\$idade_quinquenal)**
+
+-   No dplyr:
+
+-   **banco \<- banco %\>% mutate(idade_quinquenal = as.character(idade_quinquenal))**
+
+-   Ou mudando várias de uma vez:
+
+\-**banco \<- banco %\>% mutate_if(is.numeric, as.character)**
+
+-   Ordem dos comandos no gráfico, em especial com o theme; um pode sobrescrever o outro, aí é só trocar a ordem.
+
+-   Atenção com a forma de agrupamento no group_by, e qual variável escolhida melhor auxilia sua análise.
+
+-   Atenção com a escolha inapropriada de gráficos para as variáveis em análise. Plotar um gráfico de barras de uma var contínua no eixo y e outra categórica no eixo x retornaria o quê? Tentem visualizar a representação gráfica teoricamente/mentalmente antes de passar para o código. Por exemplo, séries temporais e gráfico de linha fazem sentido juntos por um motivo. Esse mesmo motivo seria válido para categorias de variáveis nominais independentes entre si?
+
+-   Atenção com os argumentos exigidos em cada geom. Só é possível fazer um gráfico de dispersão se temos valores para plotar tanto no eixo x como no eixo y. Esse não é um gráfico possível para análise univariada. Um histograma só pode ser feito com variáveis quantitativas, o mesmo sendo válido para o boxplot. Um conhecimento geral prévio sobre visualização gráfica é recomendável.
+
+# Referências e links interessantes
+
+## Referências
+
+CERVI, Emerson U. Manual de métodos quantitativos para iniciantes em Ciência Política --\
+Volume 1 / Emerson Urizzi Cervi - Curitiba: CPOP-UFPR, 2017. (1ª edição). 256 p.
+
+LEVIN, Jack; FOX, James A.; FORDE, David R. Elementary Statistics in Social Research. Boston: Pearson, 2014.
+
+WICKHAM, Hadley. ggplot2. Elegant Graphics for Data Analysis. New York: Springer, 2009.
+
+## Links
+
+[Tabelas descritivas](https://epirhandbook.com/en/descriptive-tables.html)
+
+[Passo a passo de construção de gráficos com o ggplot](https://librarycarpentry.org/lc-r/04-data-viz-ggplot/index.html)
+
+[Reordenação de categorias](https://juliasilge.com/blog/reorder-within/)
+
+[Sobre o formato long em combinação com o facetting](http://eriqande.github.io/rep-res-web/lectures/ggplot_2_reshape_facets_stats.html)
+
+[Gráficos com barras de erro](http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/)
+
+[Qual teste estatístico usar](https://towardsdatascience.com/how-to-know-which-statistical-test-to-use-for-hypothesis-testing-744c91685a5d)
+
+## Obrigada!
+
+![](/cloud/project/Imagens/ggplot.png)
